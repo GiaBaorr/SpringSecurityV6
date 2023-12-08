@@ -63,13 +63,21 @@ public class SecurityConfig {
             //enable read csrf cookie from UI
         });
         http.addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);//execute cookie filter after basic filter
-        http
-                .authorizeHttpRequests((requests) ->
-                        requests.requestMatchers(
-                                        "/myAccount", "/myBalance", "/contact", "/myLoan",
-                                        "/myCard", "/user")
-                                .authenticated()
-                                .anyRequest().permitAll());
+        http.authorizeHttpRequests((requests) ->
+                requests
+                        /*.requestMatchers("/myAccount").hasAuthority("VIEWACCOUNT")
+                        .requestMatchers("/myBalance").hasAnyAuthority("VIEWACCOUNT", "VIEWBALANCE")
+                        .requestMatchers("/myLoans").hasAuthority("VIEWLOANS")
+                        .requestMatchers("/myCards").hasAuthority("VIEWCARDS")*/
+                        .requestMatchers("/myAccount").hasRole("USER")
+                        .requestMatchers("/myBalance").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/myLoans").hasRole("USER")
+                        .requestMatchers("/myCards").hasRole("USER")
+                        .requestMatchers(
+                                "/myAccount", "/myBalance", "/myLoans",
+                                "/myCards", "/user")
+                        .authenticated()
+                        .anyRequest().permitAll());
         http.formLogin(Customizer.withDefaults());
         http.httpBasic(Customizer.withDefaults());
 

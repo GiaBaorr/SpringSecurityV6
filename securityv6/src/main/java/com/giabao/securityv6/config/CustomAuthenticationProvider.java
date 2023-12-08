@@ -1,5 +1,6 @@
 package com.giabao.securityv6.config;
 
+import com.giabao.securityv6.model.Authority;
 import com.giabao.securityv6.model.Customer;
 import com.giabao.securityv6.repository.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class CustomAuthenticationProvider implements AuthenticationProvider {
@@ -32,20 +34,27 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         String password = authentication.getCredentials().toString();
 
         List<Customer> customerList = customerRepository.findCustomersByEmail(username);
-        if (customerList.size() > 0) {
-            if (passwordEncoder.matches(password, customerList.get(0).getPwd())) {
-                List<GrantedAuthority> authorities = new ArrayList<>();
-                authorities.add(new SimpleGrantedAuthority(customerList.get(0).getRole()));
-
-                return new UsernamePasswordAuthenticationToken(username,password,authorities);
+        if (!customerList.isEmpty()) {
+            Customer fetchedCustomer = customerList.get(0);
+            if (passwordEncoder.matches(password, fetchedCustomer.getPwd())) {
+                return new UsernamePasswordAuthenticationToken(
+                        username, password,
+                        extractAuthorites(fetchedCustomer.getAuthorities()));
             } else {
                 throw new BadCredentialsException("Invalid password");
             }
         } else {
             throw new BadCredentialsException("No user registered with this details");
         }
+    }
 
-
+    //helper method to generate list of granted authorities from  Set<Authority>
+    private List<GrantedAuthority> extractAuthorites(Set<Authority> authorities) {
+        List<GrantedAuthority> result = new ArrayList<>();
+        for (Authority auth : authorities) {
+            result.add(new SimpleGrantedAuthority(auth.getName()));
+        }
+        return result;
     }
 
     @Override
