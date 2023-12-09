@@ -2,6 +2,8 @@ package com.giabao.securityv6.config;
 
 
 import com.giabao.securityv6.filter.CsrfCookieFilter;
+import com.giabao.securityv6.filter.LoggerFilterAfterAuthenticate;
+import com.giabao.securityv6.filter.RequestValidationBeforeFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -62,7 +64,14 @@ public class SecurityConfig {
             crsfCustomizer.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
             //enable read csrf cookie from UI
         });
-        http.addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);//execute cookie filter after basic filter
+
+        //filter before authentication filter to reject "test" email
+        http.addFilterBefore(new RequestValidationBeforeFilter(), BasicAuthenticationFilter.class);
+        //execute cookie filter after basic filter
+        http.addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
+        //add logging authentication detail after logged in
+        http.addFilterAfter(new LoggerFilterAfterAuthenticate(),BasicAuthenticationFilter.class);
+
         http.authorizeHttpRequests((requests) ->
                 requests
                         /*.requestMatchers("/myAccount").hasAuthority("VIEWACCOUNT")
