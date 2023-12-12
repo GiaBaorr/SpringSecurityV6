@@ -1,9 +1,7 @@
 package com.giabao.securityv6.config;
 
 
-import com.giabao.securityv6.filter.CsrfCookieFilter;
-import com.giabao.securityv6.filter.LoggerFilterAfterAuthenticate;
-import com.giabao.securityv6.filter.RequestValidationBeforeFilter;
+import com.giabao.securityv6.filter.*;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +17,7 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 
@@ -32,6 +31,8 @@ public class SecurityConfig {
         CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler(); //define handler
         requestHandler.setCsrfRequestAttributeName("_csrf");
 
+
+        /*//Config JSESSIONID
         http.securityContext(contextConfigurer -> {
             contextConfigurer.requireExplicitSave(false);
             //let spring generate jSessionId, and save authenticationDetail in securityContextHolder
@@ -40,9 +41,12 @@ public class SecurityConfig {
             httpSecuritySessionManagementConfigurer.sessionCreationPolicy(SessionCreationPolicy.ALWAYS);
             //by default, it will be created when if required
             //a session will always be created if one hasn't already exist.
-        });
+        });*/
 
+        //config to stop using session, use jwt token instead, so we need should use stateless
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
+        //Cors config
         http.cors(corsCustomizer -> corsCustomizer.configurationSource(new CorsConfigurationSource() {
             @Override
             public CorsConfiguration getCorsConfiguration(HttpServletRequest request) {
@@ -51,12 +55,13 @@ public class SecurityConfig {
                 config.setAllowedMethods(Collections.singletonList("*"));
                 config.setAllowCredentials(true);
                 config.setAllowedHeaders(Collections.singletonList("*"));
+                config.setExposedHeaders(Arrays.asList("Authorization")); //enable UI side can get this header
                 config.setMaxAge(3600L);
                 return config; //return
             }
         }));
 
-
+        //CSRF config
         http.csrf(crsfCustomizer -> {
             crsfCustomizer.csrfTokenRequestHandler(requestHandler) //set request handler for csrf
                     .ignoringRequestMatchers("/register"); //api that not need csrf protection
@@ -71,6 +76,10 @@ public class SecurityConfig {
         http.addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
         //add logging authentication detail after logged in
         http.addFilterAfter(new LoggerFilterAfterAuthenticate(),BasicAuthenticationFilter.class);
+        //filter for jwt inject
+        http.addFilterAfter(new JwtFilter(), BasicAuthenticationFilter.class);
+        //filter to validate jwt
+        http.addFilterBefore(new JwtValidatorFilter(), BasicAuthenticationFilter.class);
 
         http.authorizeHttpRequests((requests) ->
                 requests

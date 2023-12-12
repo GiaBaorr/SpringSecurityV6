@@ -49,9 +49,8 @@ public class RequestValidationBeforeFilter implements Filter {
                     throw new BadCredentialsException("Failed to decode basic authentication token");
                 }
 
-                filterChain.doFilter(request,response);
             }
         }
-
+        filterChain.doFilter(request,response);
     }
 }
