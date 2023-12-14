@@ -64,7 +64,7 @@ public class SecurityConfig {
         //CSRF config
         http.csrf(crsfCustomizer -> {
             crsfCustomizer.csrfTokenRequestHandler(requestHandler) //set request handler for csrf
-                    .ignoringRequestMatchers("/register"); //api that not need csrf protection
+                    .ignoringRequestMatchers("contact","/register"); //api that not need csrf protection
 
             crsfCustomizer.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
             //enable read csrf cookie from UI
@@ -89,7 +89,7 @@ public class SecurityConfig {
                         .requestMatchers("/myCards").hasAuthority("VIEWCARDS")*/
                         .requestMatchers("/myAccount").hasRole("USER")
                         .requestMatchers("/myBalance").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/myLoans").hasRole("USER")
+                        .requestMatchers("/myLoans").authenticated()
                         .requestMatchers("/myCards").hasRole("USER")
                         .requestMatchers(
                                 "/myAccount", "/myBalance", "/myLoans",

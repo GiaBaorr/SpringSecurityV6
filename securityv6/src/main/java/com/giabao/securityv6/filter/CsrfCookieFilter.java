@@ -18,7 +18,7 @@ public class CsrfCookieFilter extends OncePerRequestFilter {
         if(null != csrfToken.getHeaderName()){
             response.setHeader(csrfToken.getHeaderName(), csrfToken.getToken());
         }
-
+        //when we sent token inside header, spring automatically sent token inside cookie too
         filterChain.doFilter(request, response);
     }
 }
