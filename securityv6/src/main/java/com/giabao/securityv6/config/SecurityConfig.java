@@ -1,15 +1,13 @@
 package com.giabao.securityv6.config;
 
 
-import com.giabao.securityv6.filter.*;
+import com.giabao.securityv6.filter.CsrfCookieFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
@@ -30,6 +28,9 @@ public class SecurityConfig {
         //csrf by default will block put-post but not "get" API
         CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler(); //define handler
         requestHandler.setCsrfRequestAttributeName("_csrf");
+
+        JwtAuthenticationConverter jwtAuthenticationConverterObject = new JwtAuthenticationConverter();
+        jwtAuthenticationConverterObject.setJwtGrantedAuthoritiesConverter(new KeyCloakRoleConverter());
 
 
         /*//Config JSESSIONID
@@ -64,22 +65,24 @@ public class SecurityConfig {
         //CSRF config
         http.csrf(crsfCustomizer -> {
             crsfCustomizer.csrfTokenRequestHandler(requestHandler) //set request handler for csrf
-                    .ignoringRequestMatchers("contact","/register"); //api that not need csrf protection
+                    .ignoringRequestMatchers("contact", "/register"); //api that not need csrf protection
 
             crsfCustomizer.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
             //enable read csrf cookie from UI
         });
 
-        //filter before authentication filter to reject "test" email
-        http.addFilterBefore(new RequestValidationBeforeFilter(), BasicAuthenticationFilter.class);
         //execute cookie filter after basic filter
         http.addFilterAfter(new CsrfCookieFilter(), BasicAuthenticationFilter.class);
+
+        //Remove these filter because we transfer this project into using oauth2 protocol
+        //filter before authentication filter to reject "test" email
+        //http.addFilterBefore(new RequestValidationBeforeFilter(), BasicAuthenticationFilter.class);
         //add logging authentication detail after logged in
-        http.addFilterAfter(new LoggerFilterAfterAuthenticate(),BasicAuthenticationFilter.class);
+        //http.addFilterAfter(new LoggerFilterAfterAuthenticate(),BasicAuthenticationFilter.class);
         //filter for jwt inject
-        http.addFilterAfter(new JwtFilter(), BasicAuthenticationFilter.class);
+        //http.addFilterAfter(new JwtFilter(), BasicAuthenticationFilter.class);
         //filter to validate jwt
-        http.addFilterBefore(new JwtValidatorFilter(), BasicAuthenticationFilter.class);
+        //http.addFilterBefore(new JwtValidatorFilter(), BasicAuthenticationFilter.class);
 
         http.authorizeHttpRequests((requests) ->
                 requests
@@ -96,9 +99,16 @@ public class SecurityConfig {
                                 "/myCards", "/user")
                         .authenticated()
                         .anyRequest().permitAll());
-        http.formLogin(Customizer.withDefaults());
-        http.httpBasic(Customizer.withDefaults());
 
+        http
+                .oauth2ResourceServer(oauth2 ->
+                        oauth2.jwt(jwt ->
+                                jwt.jwtAuthenticationConverter(jwtAuthenticationConverterObject)
+                        )
+                );
+
+        /*http.formLogin(Customizer.withDefaults());
+        http.httpBasic(Customizer.withDefaults());*/
 
         return http.build();
     }
@@ -125,11 +135,11 @@ public class SecurityConfig {
     }*/
 
 
-    @Bean
+    /*@Bean
     public PasswordEncoder passwordEncoder() {
         //return NoOpPasswordEncoder.getInstance();
         return new BCryptPasswordEncoder();
-    }
+    }*/
 
 
 }
