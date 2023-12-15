@@ -20,10 +20,10 @@ public class LoginController {
     @Autowired
     CustomerRepository customerRepository;
 
-    @Autowired
-    PasswordEncoder passwordEncoder;
+    /*@Autowired
+    PasswordEncoder passwordEncoder;*/
 
-    @PostMapping("/register")
+    /*@PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody Customer customer) {
         ResponseEntity<String> response = null;
         Customer savedCustomer = null;
@@ -44,7 +44,7 @@ public class LoginController {
                     .body("An exception: " + ex.getMessage());
         }
         return response;
-    }
+    }*/
 
     @RequestMapping("/user")
     public Customer getUserDetailsAfterLogin(Authentication authentication) {

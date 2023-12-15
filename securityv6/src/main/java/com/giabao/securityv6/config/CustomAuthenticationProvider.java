@@ -1,3 +1,7 @@
+//Disable this class because we won't authenticate user by leveraging database anymore
+//then we depend on authentication server : Keycloak
+
+/*
 package com.giabao.securityv6.config;
 
 import com.giabao.securityv6.model.Authority;
@@ -62,3 +66,4 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         return (UsernamePasswordAuthenticationToken.class.isAssignableFrom(authentication));
     }
 }
+*/
